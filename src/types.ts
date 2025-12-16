@@ -85,6 +85,19 @@ export interface OcrSettings {
   intelligence: DocumentIntelligence;
   security: SecuritySettings;
   output: OutputOptions;
+  
+  // Backend-specific settings
+  parser?: 'docling' | 'mineru';
+  parseMethod?: 'auto' | 'ocr' | 'txt';
+  preserveLayout?: boolean;
+  returnLayout?: boolean;
+  startPage?: number;
+  endPage?: number;
+  extract?: {
+    tables?: boolean;
+    equations?: boolean;
+    images?: boolean;
+  };
 }
 
 export interface OcrPage {
@@ -162,10 +175,11 @@ export type OutputFormat = 'txt' | 'pdf' | 'docx' | 'md' | 'json';
 
 export interface ConvertOptions {
   format: OutputFormat;
-  fileName: string;
-  includeMetadata: boolean;
-  includeHeader: boolean;
-  pageSize: 'a4' | 'letter' | 'auto';
+  fileName?: string;
+  includeMetadata?: boolean;
+  includeHeader?: boolean;
+  pageSize?: 'A4' | 'Letter' | 'auto';
+  fontSize?: number;
 }
 
 export interface BatchJob {

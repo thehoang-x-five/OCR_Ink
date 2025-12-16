@@ -21,38 +21,66 @@ const LayoutViewer = ({ layoutPages, fullText, text }: LayoutViewerProps) => {
 
   const textLayout = useMemo<OcrLayoutPage[]>(() => {
     if (!text.trim()) return [];
-    const lines = text.split('\n');
-    const lineHeight = 0.05;
-    const gap = 0.015;
-    const pages: OcrLayoutPage[] = [
-      {
-        page: 1,
+    const lines = text.split('\n').filter(ln => ln.trim());
+    if (!lines.length) return [];
+    
+    const lineHeight = 0.035;
+    const lineGap = 0.012;
+    const marginX = 0.05;
+    const marginY = 0.05;
+    const maxLinesPerPage = Math.floor((1.414 - marginY * 2) / (lineHeight + lineGap));
+    
+    // Split into pages if too many lines
+    const pageChunks: string[][] = [];
+    for (let i = 0; i < lines.length; i += maxLinesPerPage) {
+      pageChunks.push(lines.slice(i, i + maxLinesPerPage));
+    }
+    
+    const pages: OcrLayoutPage[] = pageChunks.map((pageLines, pageIdx) => {
+      const blockLines = pageLines.map((ln, idx) => {
+        const words = ln.trim().split(/\s+/).filter(Boolean);
+        const y = marginY + idx * (lineHeight + lineGap);
+        
+        // Calculate word positions more accurately
+        const totalChars = words.reduce((sum, w) => sum + w.length, 0);
+        const availableWidth = 0.9;
+        const charWidth = totalChars > 0 ? Math.min(availableWidth / totalChars, 0.025) : 0.02;
+        const wordGap = 0.015;
+        
+        let xCursor = marginX;
+        const wordBoxes = words.map((w) => {
+          const wordWidth = Math.max(w.length * charWidth, 0.02);
+          const bbox = { x: xCursor, y, w: wordWidth, h: lineHeight };
+          xCursor += wordWidth + wordGap;
+          return { text: w, bbox, confidence: 0.92 };
+        });
+        
+        return {
+          text: ln,
+          confidence: 0.92,
+          bbox: { x: marginX, y, w: Math.min(xCursor - marginX, availableWidth), h: lineHeight },
+          words: wordBoxes,
+        };
+      });
+      
+      // Calculate block height based on content
+      const lastLine = blockLines[blockLines.length - 1];
+      const blockHeight = lastLine ? (lastLine.bbox.y + lastLine.bbox.h - marginY + 0.02) : 0.9;
+      
+      return {
+        page: pageIdx + 1,
         width: 1,
         height: 1.414,
         blocks: [
           {
-            id: 'text-block',
-            bbox: { x: 0.05, y: 0.05, w: 0.9, h: 0.9 },
-            lines: lines.map((ln, idx) => {
-              const words = ln.trim().split(/\s+/).filter(Boolean);
-              const y = 0.08 + idx * (lineHeight + gap);
-              const wordWidth = words.length ? Math.min(0.9 / words.length, 0.2) : 0.1;
-              let xCursor = 0.05;
-              return {
-                text: ln,
-                confidence: 0.9,
-                bbox: { x: 0.05, y, w: 0.9, h: lineHeight },
-                words: words.map((w) => {
-                  const bbox = { x: xCursor, y, w: wordWidth, h: lineHeight };
-                  xCursor += wordWidth + 0.01;
-                  return { text: w, bbox, confidence: 0.9 };
-                }),
-              };
-            }),
+            id: `text-block-${pageIdx}`,
+            bbox: { x: marginX, y: marginY, w: 0.9, h: Math.min(blockHeight, 0.9) },
+            lines: blockLines,
           },
         ],
-      },
-    ];
+      };
+    });
+    
     return pages;
   }, [text]);
 
@@ -91,6 +119,14 @@ const LayoutViewer = ({ layoutPages, fullText, text }: LayoutViewerProps) => {
     return 'bg-emerald-100/50 text-emerald-800';
   };
 
+  const blockTypeColors: Record<string, string> = {
+    heading: 'border-purple-400/60 bg-purple-50/30',
+    table: 'border-green-400/60 bg-green-50/30',
+    image: 'border-orange-400/60 bg-orange-50/30',
+    list: 'border-cyan-400/60 bg-cyan-50/30',
+    text: 'border-blue-400/40 bg-blue-50/20',
+  };
+
   const renderPage = (page: OcrLayoutPage) => {
     if (!preserveLayout) {
       const text = page.blocks
@@ -112,31 +148,80 @@ const LayoutViewer = ({ layoutPages, fullText, text }: LayoutViewerProps) => {
 
     return (
       <div className="relative w-full overflow-auto rounded-lg border border-border/70 bg-white shadow-inner max-h-[70vh]">
+        {/* Background pattern */}
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(15,23,42,0.03),transparent_30%),radial-gradient(circle_at_80%_10%,rgba(15,23,42,0.04),transparent_28%)] pointer-events-none" />
+        
         <div className="relative" style={canvasStyle}>
           <div className="absolute inset-0">
-            {page.blocks.map((block) =>
-              block.lines.map((line, idx) =>
-                line.words.map((word, wIdx) => {
-                  const left = `${word.bbox.x * 100}%`;
-                  const top = `${word.bbox.y * 100}%`;
-                  const width = `${word.bbox.w * 100}%`;
-                  const height = `${word.bbox.h * 100}%`;
-                  return (
-                    <div
-                      key={`${block.id}-${idx}-${wIdx}`}
-                      className={`absolute flex items-center justify-center rounded-sm text-[10px] leading-tight px-1 ${wordClasses(
-                        word.confidence
-                      )} ${showBoxes ? 'border border-primary/40 shadow-[0_0_0_1px_rgba(59,130,246,0.2)]' : ''}`}
-                      style={{ left, top, width, height }}
-                      title={`Conf: ${(word.confidence * 100).toFixed(1)}%`}
-                    >
-                      {word.text}
-                    </div>
-                  );
-                })
-              )
-            )}
+            {/* Render blocks with their bounding boxes */}
+            {page.blocks.map((block, blockIdx) => {
+              const blockType = (block as any).type || 'text';
+              const blockLeft = `${block.bbox.x * 100}%`;
+              const blockTop = `${block.bbox.y * 100}%`;
+              const blockWidth = `${block.bbox.w * 100}%`;
+              const blockHeight = `${block.bbox.h * 100}%`;
+              
+              return (
+                <div
+                  key={`block-${block.id || blockIdx}`}
+                  className={`absolute rounded ${showBoxes ? `border-2 ${blockTypeColors[blockType] || blockTypeColors.text}` : ''}`}
+                  style={{ left: blockLeft, top: blockTop, width: blockWidth, height: blockHeight }}
+                >
+                  {/* Render lines within block */}
+                  {block.lines.map((line, lineIdx) => {
+                    // Calculate line position relative to block
+                    const lineLeft = `${((line.bbox.x - block.bbox.x) / block.bbox.w) * 100}%`;
+                    const lineTop = `${((line.bbox.y - block.bbox.y) / block.bbox.h) * 100}%`;
+                    const lineWidth = `${(line.bbox.w / block.bbox.w) * 100}%`;
+                    const lineHeight = `${(line.bbox.h / block.bbox.h) * 100}%`;
+                    
+                    return (
+                      <div
+                        key={`line-${blockIdx}-${lineIdx}`}
+                        className="absolute"
+                        style={{ left: lineLeft, top: lineTop, width: lineWidth, height: lineHeight }}
+                      >
+                        {/* Render words within line */}
+                        {line.words.map((word, wordIdx) => {
+                          // Calculate word position relative to line
+                          const wordLeft = line.bbox.w > 0 
+                            ? `${((word.bbox.x - line.bbox.x) / line.bbox.w) * 100}%`
+                            : '0%';
+                          const wordTop = '0%';
+                          const wordWidth = line.bbox.w > 0 
+                            ? `${(word.bbox.w / line.bbox.w) * 100}%`
+                            : 'auto';
+                          const wordHeight = '100%';
+                          
+                          return (
+                            <span
+                              key={`word-${blockIdx}-${lineIdx}-${wordIdx}`}
+                              className={`absolute flex items-center text-[9px] sm:text-[10px] leading-tight px-0.5 truncate ${wordClasses(
+                                word.confidence
+                              )} ${showBoxes ? 'border border-primary/30 rounded-sm' : ''}`}
+                              style={{ 
+                                left: wordLeft, 
+                                top: wordTop, 
+                                width: wordWidth, 
+                                height: wordHeight,
+                                maxWidth: '100%',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                                fontSize: `clamp(6px, ${zoom * 0.08}px, 12px)`,
+                              }}
+                              title={`"${word.text}" - Conf: ${(word.confidence * 100).toFixed(1)}%`}
+                            >
+                              {word.text}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>

@@ -71,6 +71,17 @@ const defaultSettings: OcrSettings = {
     mergePages: true,
     includeConfidence: true,
   },
+  
+  // Backend-specific settings
+  parser: 'docling',
+  parseMethod: 'auto',
+  preserveLayout: true,
+  returnLayout: true,
+  extract: {
+    tables: true,
+    equations: true,
+    images: false,
+  },
 };
 
 const Extract = () => {

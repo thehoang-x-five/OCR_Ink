@@ -3,7 +3,7 @@ import { useOutletContext } from 'react-router-dom';
 import Card from '@/components/common/Card';
 import Dropzone from '@/components/ocr/Dropzone';
 import JobsTable from '@/components/batch/JobsTable';
-import { createBatchJobs, getJobs } from '@/lib/api';
+import { createBatchJobs, createBatchJobsWithBackend, getJobs } from '@/lib/api';
 import type { AppOutletContext } from '@/App';
 import type { BatchJob, OcrSettings } from '@/types';
 
@@ -44,6 +44,17 @@ const batchDefaults: OcrSettings = {
   intelligence: { tableExtraction: true, keyValueExtraction: true, entityExtraction: true, template: 'invoice' },
   security: { retention: '30d', piiDetection: false, redaction: false },
   output: { exportFormats: ['txt', 'md', 'json'], mergePages: true, includeConfidence: true },
+  
+  // Backend-specific settings
+  parser: 'docling',
+  parseMethod: 'auto',
+  preserveLayout: true,
+  returnLayout: true,
+  extract: {
+    tables: true,
+    equations: true,
+    images: false,
+  },
 };
 
 const BatchJobs = () => {
@@ -73,11 +84,23 @@ const BatchJobs = () => {
       return;
     }
     setIsCreating(true);
-    const created = await createBatchJobs(files, batchDefaults);
-    setJobs((prev) => [...created, ...prev]);
-    setFiles([]);
+    
+    try {
+      // Try backend first
+      const created = await createBatchJobsWithBackend(files, batchDefaults);
+      setJobs((prev) => [...created, ...prev]);
+      setFiles([]);
+      pushToast({ type: 'success', message: `${created.length} jobs queued with backend` });
+    } catch (error) {
+      console.warn('Backend batch processing failed, falling back to demo:', error);
+      // Fallback to demo mode
+      const created = await createBatchJobs(files, batchDefaults);
+      setJobs((prev) => [...created, ...prev]);
+      setFiles([]);
+      pushToast({ type: 'info', message: `${created.length} jobs queued (demo mode)` });
+    }
+    
     setIsCreating(false);
-    pushToast({ type: 'success', message: `${created.length} jobs queued` });
   };
 
   const handleRetry = (job: BatchJob) => {
