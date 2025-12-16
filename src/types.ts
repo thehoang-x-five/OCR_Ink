@@ -1,89 +1,210 @@
-// OCR Settings Types
+export type ThemeMode = 'light' | 'dark';
+
 export type OcrLanguage = 'auto' | 'vi' | 'en' | 'ja' | 'ko' | 'zh';
 export type OcrMode = 'fast' | 'balanced' | 'accurate';
 
-export interface OcrPreprocess {
+export interface PreprocessSettings {
+  autoOrient: boolean;
+  rotate: 0 | 90 | 180 | 270;
   deskew: boolean;
   denoise: boolean;
+  deblur: boolean;
   binarize: boolean;
   contrastBoost: boolean;
+  brightness: number;
+  shadowRemoval: boolean;
+  removeLines: boolean;
+  dpiNormalize: boolean;
+  qualityScore: number;
+}
+
+export interface LayoutSettings {
+  preserveLayout: boolean;
+  keepLineBreaks: boolean;
+  detectColumns: boolean;
+  detectHeadersFooters: boolean;
+  detectLists: boolean;
+  detectForms: boolean;
+}
+
+export interface RegionBox {
+  id: string;
+  label?: string;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
 }
 
 export interface RegionSelection {
-  type: 'full' | 'manual';
-  coords?: { x: number; y: number; w: number; h: number };
+  mode: 'full' | 'manual';
+  regions: RegionBox[];
+  activePage: number;
 }
 
-export interface OcrOutputOptions {
-  keepLineBreaks: boolean;
-  preserveLayout: boolean;
-  detectTables: boolean;
+export interface PostProcessing {
+  spellCorrection: boolean;
+  customVocabulary: string;
+  regexCleanup: {
+    phone: boolean;
+    email: boolean;
+    date: boolean;
+    id: boolean;
+  };
+  normalizeWhitespace: boolean;
+  maskSensitive: boolean;
+  highlightLowConfidence: boolean;
+}
+
+export interface DocumentIntelligence {
+  tableExtraction: boolean;
+  keyValueExtraction: boolean;
+  entityExtraction: boolean;
+  template: 'none' | 'invoice' | 'receipt' | 'id' | 'form';
+}
+
+export interface SecuritySettings {
+  retention: '7d' | '30d' | '90d';
+  piiDetection: boolean;
+  redaction: boolean;
+}
+
+export interface OutputOptions {
+  exportFormats: Array<'txt' | 'md' | 'json' | 'pdf'>;
+  mergePages: boolean;
+  includeConfidence: boolean;
 }
 
 export interface OcrSettings {
   language: OcrLanguage;
   mode: OcrMode;
-  preprocess: OcrPreprocess;
+  preprocess: PreprocessSettings;
+  layout: LayoutSettings;
   region: RegionSelection;
-  output: OcrOutputOptions;
+  post: PostProcessing;
+  intelligence: DocumentIntelligence;
+  security: SecuritySettings;
+  output: OutputOptions;
 }
 
-// OCR Result Types
 export interface OcrPage {
   page: number;
   text: string;
   confidence: number;
+  lowConfidenceRanges?: Array<[number, number]>;
+}
+
+export interface BoundingBox {
+  x: number; // 0..1 normalized
+  y: number; // 0..1 normalized
+  w: number; // 0..1 normalized
+  h: number; // 0..1 normalized
+}
+
+export interface OcrWord {
+  text: string;
+  bbox: BoundingBox;
+  confidence: number;
+  fontSize?: number;
+}
+
+export interface OcrLine {
+  text: string;
+  bbox: BoundingBox;
+  confidence: number;
+  words: OcrWord[];
+}
+
+export interface OcrBlock {
+  id: string;
+  bbox: BoundingBox;
+  lines: OcrLine[];
+}
+
+export interface OcrLayoutPage {
+  page: number;
+  width: number;
+  height: number;
+  blocks: OcrBlock[];
+}
+
+export interface StructuredResult {
+  tables: Array<{
+    id: string;
+    name: string;
+    rows: string[][];
+  }>;
+  keyValues: Array<{ key: string; value: string }>;
+  entities: Array<{ type: string; value: string }>;
 }
 
 export interface OcrResult {
   fullText: string;
-  pages?: OcrPage[];
+  pages: OcrPage[];
   language: string;
   avgConfidence: number;
-  processingTime: number;
+  structured: StructuredResult;
+  layoutPages?: OcrLayoutPage[];
+  version: string;
+  status: 'queued' | 'processing' | 'done' | 'error';
 }
 
-// Convert Types
+export type ProcessStatus = 'idle' | 'running' | 'done' | 'error';
+export type TabType = 'extract' | 'convert';
+
+export interface ProgressState {
+  current: number;
+  total: number;
+  label: string;
+}
+
 export type OutputFormat = 'txt' | 'pdf' | 'docx' | 'md' | 'json';
-export type Encoding = 'utf-8' | 'utf-16' | 'ascii';
-export type PageSize = 'a4' | 'letter' | 'legal';
 
 export interface ConvertOptions {
   format: OutputFormat;
   fileName: string;
-  encoding: Encoding;
   includeMetadata: boolean;
-  pageSize: PageSize;
-  fontSize: number;
+  includeHeader: boolean;
+  pageSize: 'a4' | 'letter' | 'auto';
 }
 
-// App State Types
-export type TabType = 'extract' | 'convert';
-export type ProcessStatus = 'idle' | 'running' | 'done' | 'error';
-
-export interface ProgressState {
-  step: number;
-  text: string;
-  total: number;
+export interface BatchJob {
+  id: string;
+  fileName: string;
+  type: 'ocr' | 'convert';
+  status: 'queued' | 'preprocessing' | 'running' | 'postprocessing' | 'done' | 'error' | 'canceled';
+  progress: number;
+  createdAt: string;
+  updatedAt: string;
+  attempt: number;
+  resultUrl?: string;
+  message?: string;
 }
 
 export interface ToastMessage {
   id: string;
   type: 'success' | 'error' | 'info';
+  title?: string;
   message: string;
 }
 
-// File validation
+export interface HighlightMatch {
+  start: number;
+  end: number;
+}
+
+export const ALLOWED_EXTENSIONS = ['png', 'jpg', 'jpeg', 'webp', 'pdf', 'docx', 'txt', 'md'];
+
 export const ALLOWED_TYPES = [
   'image/png',
   'image/jpeg',
   'image/webp',
+  'image/tiff',
+  'image/bmp',
   'application/pdf',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   'text/plain',
   'text/markdown',
 ];
 
-export const ALLOWED_EXTENSIONS = ['png', 'jpg', 'jpeg', 'webp', 'pdf', 'docx', 'txt', 'md'];
-
-export const MAX_FILE_SIZE = 15 * 1024 * 1024; // 15MB
+export const MAX_FILE_SIZE = 15 * 1024 * 1024;
