@@ -1,5 +1,6 @@
 import type { OcrSettings } from '@/types';
 import type { ReactNode } from 'react';
+import { useI18n } from '@/lib/i18n';
 
 interface Props {
   settings: OcrSettings;
@@ -35,56 +36,58 @@ const ToggleRow = ({
 );
 
 const OcrSettingsPanel = ({ settings, onChange, disabled }: Props) => {
+  const { t } = useI18n();
+  
   const update = <K extends keyof OcrSettings>(key: K, value: OcrSettings[K]) =>
     !disabled && onChange({ ...settings, [key]: value });
 
   return (
     <div className={`space-y-4 ${disabled ? 'opacity-60 pointer-events-none' : ''}`}>
-      <Section title="Recognition">
+      <Section title={t.ocrSettings.recognition}>
         <div className="grid grid-cols-2 gap-2 text-sm">
           <label className="flex flex-col gap-1">
-            Language
+            {t.ocrSettings.language}
             <select
               value={settings.language}
               onChange={(e) => update('language', e.target.value as OcrSettings['language'])}
               className="input-modern text-sm"
             >
-              <option value="auto">Auto</option>
-              <option value="vi">Vietnamese</option>
-              <option value="en">English</option>
-              <option value="ja">Japanese</option>
-              <option value="ko">Korean</option>
-              <option value="zh">Chinese</option>
+              <option value="auto">{t.ocrSettings.auto}</option>
+              <option value="vi">{t.ocrSettings.vietnamese}</option>
+              <option value="en">{t.ocrSettings.english}</option>
+              <option value="ja">{t.ocrSettings.japanese}</option>
+              <option value="ko">{t.ocrSettings.korean}</option>
+              <option value="zh">{t.ocrSettings.chinese}</option>
             </select>
           </label>
           <label className="flex flex-col gap-1">
-            Mode
+            {t.ocrSettings.mode}
             <select
               value={settings.mode}
               onChange={(e) => update('mode', e.target.value as OcrSettings['mode'])}
               className="input-modern text-sm"
             >
-              <option value="fast">Fast</option>
-              <option value="balanced">Balanced</option>
-              <option value="accurate">Accurate</option>
+              <option value="fast">{t.ocrSettings.fast}</option>
+              <option value="balanced">{t.ocrSettings.balanced}</option>
+              <option value="accurate">{t.ocrSettings.accurate}</option>
             </select>
           </label>
         </div>
       </Section>
 
-      <Section title="Preprocess">
+      <Section title={t.ocrSettings.preprocess}>
         <div className="grid grid-cols-2 gap-2">
-          <ToggleRow label="Auto-orientation" checked={settings.preprocess.autoOrient} onChange={(val) => update('preprocess', { ...settings.preprocess, autoOrient: val })} />
-          <ToggleRow label="Deskew" checked={settings.preprocess.deskew} onChange={(val) => update('preprocess', { ...settings.preprocess, deskew: val })} />
-          <ToggleRow label="Denoise" checked={settings.preprocess.denoise} onChange={(val) => update('preprocess', { ...settings.preprocess, denoise: val })} />
-          <ToggleRow label="Deblur" checked={settings.preprocess.deblur} onChange={(val) => update('preprocess', { ...settings.preprocess, deblur: val })} />
-          <ToggleRow label="Binarize" checked={settings.preprocess.binarize} onChange={(val) => update('preprocess', { ...settings.preprocess, binarize: val })} />
-          <ToggleRow label="Contrast boost" checked={settings.preprocess.contrastBoost} onChange={(val) => update('preprocess', { ...settings.preprocess, contrastBoost: val })} />
-          <ToggleRow label="Shadow removal" checked={settings.preprocess.shadowRemoval} onChange={(val) => update('preprocess', { ...settings.preprocess, shadowRemoval: val })} />
-          <ToggleRow label="Remove lines" checked={settings.preprocess.removeLines} onChange={(val) => update('preprocess', { ...settings.preprocess, removeLines: val })} />
-          <ToggleRow label="DPI normalize" checked={settings.preprocess.dpiNormalize} onChange={(val) => update('preprocess', { ...settings.preprocess, dpiNormalize: val })} />
+          <ToggleRow label={t.ocrSettings.autoOrientation} checked={settings.preprocess.autoOrient} onChange={(val) => update('preprocess', { ...settings.preprocess, autoOrient: val })} />
+          <ToggleRow label={t.ocrSettings.deskew} checked={settings.preprocess.deskew} onChange={(val) => update('preprocess', { ...settings.preprocess, deskew: val })} />
+          <ToggleRow label={t.ocrSettings.denoise} checked={settings.preprocess.denoise} onChange={(val) => update('preprocess', { ...settings.preprocess, denoise: val })} />
+          <ToggleRow label={t.ocrSettings.deblur} checked={settings.preprocess.deblur} onChange={(val) => update('preprocess', { ...settings.preprocess, deblur: val })} />
+          <ToggleRow label={t.ocrSettings.binarize} checked={settings.preprocess.binarize} onChange={(val) => update('preprocess', { ...settings.preprocess, binarize: val })} />
+          <ToggleRow label={t.ocrSettings.contrastBoost} checked={settings.preprocess.contrastBoost} onChange={(val) => update('preprocess', { ...settings.preprocess, contrastBoost: val })} />
+          <ToggleRow label={t.ocrSettings.shadowRemoval} checked={settings.preprocess.shadowRemoval} onChange={(val) => update('preprocess', { ...settings.preprocess, shadowRemoval: val })} />
+          <ToggleRow label={t.ocrSettings.removeLines} checked={settings.preprocess.removeLines} onChange={(val) => update('preprocess', { ...settings.preprocess, removeLines: val })} />
+          <ToggleRow label={t.ocrSettings.dpiNormalize} checked={settings.preprocess.dpiNormalize} onChange={(val) => update('preprocess', { ...settings.preprocess, dpiNormalize: val })} />
           <label className="col-span-2 flex flex-col gap-1 text-sm">
-            Rotate
+            {t.ocrSettings.rotate}
             <select
               value={settings.preprocess.rotate}
               onChange={(e) =>
@@ -99,7 +102,7 @@ const OcrSettingsPanel = ({ settings, onChange, disabled }: Props) => {
             </select>
           </label>
           <label className="col-span-2 flex flex-col gap-1 text-sm">
-            Brightness {settings.preprocess.brightness}
+            {t.ocrSettings.brightness} {settings.preprocess.brightness}
             <input
               type="range"
               min={-50}
@@ -111,23 +114,23 @@ const OcrSettingsPanel = ({ settings, onChange, disabled }: Props) => {
             />
           </label>
           <div className="col-span-2 text-xs text-muted-foreground">
-            Quality score (mock): <span className="font-semibold text-foreground">{settings.preprocess.qualityScore}</span> / 100
+            {t.ocrSettings.qualityScore}: <span className="font-semibold text-foreground">{settings.preprocess.qualityScore}</span> / 100
           </div>
         </div>
       </Section>
 
-      <Section title="Layout Analysis">
+      <Section title={t.ocrSettings.layoutAnalysis}>
         <div className="grid grid-cols-2 gap-2">
-          <ToggleRow label="Preserve layout" checked={settings.layout.preserveLayout} onChange={(val) => update('layout', { ...settings.layout, preserveLayout: val })} />
-          <ToggleRow label="Keep line breaks" checked={settings.layout.keepLineBreaks} onChange={(val) => update('layout', { ...settings.layout, keepLineBreaks: val })} />
-          <ToggleRow label="Detect columns" checked={settings.layout.detectColumns} onChange={(val) => update('layout', { ...settings.layout, detectColumns: val })} />
-          <ToggleRow label="Detect headers/footers" checked={settings.layout.detectHeadersFooters} onChange={(val) => update('layout', { ...settings.layout, detectHeadersFooters: val })} />
-          <ToggleRow label="Detect lists" checked={settings.layout.detectLists} onChange={(val) => update('layout', { ...settings.layout, detectLists: val })} />
-          <ToggleRow label="Detect forms" checked={settings.layout.detectForms} onChange={(val) => update('layout', { ...settings.layout, detectForms: val })} />
+          <ToggleRow label={t.ocrSettings.preserveLayout} checked={settings.layout.preserveLayout} onChange={(val) => update('layout', { ...settings.layout, preserveLayout: val })} />
+          <ToggleRow label={t.ocrSettings.keepLineBreaks} checked={settings.layout.keepLineBreaks} onChange={(val) => update('layout', { ...settings.layout, keepLineBreaks: val })} />
+          <ToggleRow label={t.ocrSettings.detectColumns} checked={settings.layout.detectColumns} onChange={(val) => update('layout', { ...settings.layout, detectColumns: val })} />
+          <ToggleRow label={t.ocrSettings.detectHeadersFooters} checked={settings.layout.detectHeadersFooters} onChange={(val) => update('layout', { ...settings.layout, detectHeadersFooters: val })} />
+          <ToggleRow label={t.ocrSettings.detectLists} checked={settings.layout.detectLists} onChange={(val) => update('layout', { ...settings.layout, detectLists: val })} />
+          <ToggleRow label={t.ocrSettings.detectForms} checked={settings.layout.detectForms} onChange={(val) => update('layout', { ...settings.layout, detectForms: val })} />
         </div>
       </Section>
 
-      <Section title="Region / ROI">
+      <Section title={t.ocrSettings.regionRoi}>
         <div className="space-y-2">
           <div className="flex items-center gap-2 text-sm">
             <label className="inline-flex items-center gap-1">
@@ -136,7 +139,7 @@ const OcrSettingsPanel = ({ settings, onChange, disabled }: Props) => {
                 checked={settings.region.mode === 'full'}
                 onChange={() => update('region', { ...settings.region, mode: 'full' })}
               />
-              Full page
+              {t.ocrSettings.fullPage}
             </label>
             <label className="inline-flex items-center gap-1">
               <input
@@ -144,12 +147,12 @@ const OcrSettingsPanel = ({ settings, onChange, disabled }: Props) => {
                 checked={settings.region.mode === 'manual'}
                 onChange={() => update('region', { ...settings.region, mode: 'manual' })}
               />
-              Manual region
+              {t.ocrSettings.manualRegion}
             </label>
           </div>
           {settings.region.mode === 'manual' && (
             <div className="space-y-2 text-sm">
-              <p className="text-xs text-muted-foreground">Mock multi-region: add bounding boxes via inputs.</p>
+              <p className="text-xs text-muted-foreground">{t.ocrSettings.mockMultiRegion}</p>
               {settings.region.regions.map((region, idx) => (
                 <div key={region.id} className="grid grid-cols-5 items-center gap-2 rounded-lg border border-border/60 p-2 text-xs">
                   <span className="font-medium">#{idx + 1}</span>
@@ -176,7 +179,7 @@ const OcrSettingsPanel = ({ settings, onChange, disabled }: Props) => {
                       update('region', { ...settings.region, regions: settings.region.regions.filter((r) => r.id !== region.id) })
                     }
                   >
-                    Remove
+                    {t.ocrSettings.remove}
                   </button>
                 </div>
               ))}
@@ -193,44 +196,44 @@ const OcrSettingsPanel = ({ settings, onChange, disabled }: Props) => {
                   })
                 }
               >
-                + Add region
+                {t.ocrSettings.addRegion}
               </button>
             </div>
           )}
         </div>
       </Section>
 
-      <Section title="Post-processing">
+      <Section title={t.ocrSettings.postProcessing}>
         <div className="grid grid-cols-2 gap-2">
-          <ToggleRow label="Spell correction" checked={settings.post.spellCorrection} onChange={(val) => update('post', { ...settings.post, spellCorrection: val })} />
-          <ToggleRow label="Normalize whitespace" checked={settings.post.normalizeWhitespace} onChange={(val) => update('post', { ...settings.post, normalizeWhitespace: val })} />
-          <ToggleRow label="Mask sensitive data" checked={settings.post.maskSensitive} onChange={(val) => update('post', { ...settings.post, maskSensitive: val })} />
-          <ToggleRow label="Highlight low-confidence" checked={settings.post.highlightLowConfidence} onChange={(val) => update('post', { ...settings.post, highlightLowConfidence: val })} />
-          <ToggleRow label="Regex cleanup: phone" checked={settings.post.regexCleanup.phone} onChange={(val) => update('post', { ...settings.post, regexCleanup: { ...settings.post.regexCleanup, phone: val } })} />
-          <ToggleRow label="Regex cleanup: email" checked={settings.post.regexCleanup.email} onChange={(val) => update('post', { ...settings.post, regexCleanup: { ...settings.post.regexCleanup, email: val } })} />
-          <ToggleRow label="Regex cleanup: date" checked={settings.post.regexCleanup.date} onChange={(val) => update('post', { ...settings.post, regexCleanup: { ...settings.post.regexCleanup, date: val } })} />
-          <ToggleRow label="Regex cleanup: ID" checked={settings.post.regexCleanup.id} onChange={(val) => update('post', { ...settings.post, regexCleanup: { ...settings.post.regexCleanup, id: val } })} />
+          <ToggleRow label={t.ocrSettings.spellCorrection} checked={settings.post.spellCorrection} onChange={(val) => update('post', { ...settings.post, spellCorrection: val })} />
+          <ToggleRow label={t.ocrSettings.normalizeWhitespace} checked={settings.post.normalizeWhitespace} onChange={(val) => update('post', { ...settings.post, normalizeWhitespace: val })} />
+          <ToggleRow label={t.ocrSettings.maskSensitive} checked={settings.post.maskSensitive} onChange={(val) => update('post', { ...settings.post, maskSensitive: val })} />
+          <ToggleRow label={t.ocrSettings.highlightLowConfidence} checked={settings.post.highlightLowConfidence} onChange={(val) => update('post', { ...settings.post, highlightLowConfidence: val })} />
+          <ToggleRow label={t.ocrSettings.regexCleanupPhone} checked={settings.post.regexCleanup.phone} onChange={(val) => update('post', { ...settings.post, regexCleanup: { ...settings.post.regexCleanup, phone: val } })} />
+          <ToggleRow label={t.ocrSettings.regexCleanupEmail} checked={settings.post.regexCleanup.email} onChange={(val) => update('post', { ...settings.post, regexCleanup: { ...settings.post.regexCleanup, email: val } })} />
+          <ToggleRow label={t.ocrSettings.regexCleanupDate} checked={settings.post.regexCleanup.date} onChange={(val) => update('post', { ...settings.post, regexCleanup: { ...settings.post.regexCleanup, date: val } })} />
+          <ToggleRow label={t.ocrSettings.regexCleanupId} checked={settings.post.regexCleanup.id} onChange={(val) => update('post', { ...settings.post, regexCleanup: { ...settings.post.regexCleanup, id: val } })} />
         </div>
         <label className="block text-sm">
-          Custom vocabulary
+          {t.ocrSettings.customVocabulary}
           <textarea
             value={settings.post.customVocabulary}
             onChange={(e) => update('post', { ...settings.post, customVocabulary: e.target.value })}
-            placeholder="Each line is a domain-specific term..."
+            placeholder={t.ocrSettings.customVocabularyPlaceholder}
             className="input-modern text-sm"
             rows={3}
           />
         </label>
       </Section>
 
-      <Section title="Structured Extraction">
+      <Section title={t.ocrSettings.structuredExtraction}>
         <div className="grid grid-cols-2 gap-2">
-          <ToggleRow label="Table extraction" checked={settings.intelligence.tableExtraction} onChange={(val) => update('intelligence', { ...settings.intelligence, tableExtraction: val })} />
-          <ToggleRow label="Key-Value extraction" checked={settings.intelligence.keyValueExtraction} onChange={(val) => update('intelligence', { ...settings.intelligence, keyValueExtraction: val })} />
-          <ToggleRow label="Entity extraction" checked={settings.intelligence.entityExtraction} onChange={(val) => update('intelligence', { ...settings.intelligence, entityExtraction: val })} />
+          <ToggleRow label={t.ocrSettings.tableExtraction} checked={settings.intelligence.tableExtraction} onChange={(val) => update('intelligence', { ...settings.intelligence, tableExtraction: val })} />
+          <ToggleRow label={t.ocrSettings.keyValueExtraction} checked={settings.intelligence.keyValueExtraction} onChange={(val) => update('intelligence', { ...settings.intelligence, keyValueExtraction: val })} />
+          <ToggleRow label={t.ocrSettings.entityExtraction} checked={settings.intelligence.entityExtraction} onChange={(val) => update('intelligence', { ...settings.intelligence, entityExtraction: val })} />
         </div>
         <label className="block text-sm">
-          Template
+          {t.ocrSettings.template}
           <select
             value={settings.intelligence.template}
             onChange={(e) =>
@@ -238,22 +241,22 @@ const OcrSettingsPanel = ({ settings, onChange, disabled }: Props) => {
             }
             className="input-modern text-sm"
           >
-            <option value="none">None</option>
-            <option value="invoice">Invoice</option>
-            <option value="receipt">Receipt</option>
-            <option value="id">ID Card</option>
-            <option value="form">Form</option>
+            <option value="none">{t.ocrSettings.none}</option>
+            <option value="invoice">{t.ocrSettings.invoice}</option>
+            <option value="receipt">{t.ocrSettings.receipt}</option>
+            <option value="id">{t.ocrSettings.idCard}</option>
+            <option value="form">{t.ocrSettings.form}</option>
           </select>
         </label>
       </Section>
 
-      <Section title="Security & compliance">
+      <Section title={t.ocrSettings.securityCompliance}>
         <div className="grid grid-cols-2 gap-2">
-          <ToggleRow label="Redaction" checked={settings.security.redaction} onChange={(val) => update('security', { ...settings.security, redaction: val })} />
-          <ToggleRow label="PII detection" checked={settings.security.piiDetection} onChange={(val) => update('security', { ...settings.security, piiDetection: val })} />
+          <ToggleRow label={t.ocrSettings.redaction} checked={settings.security.redaction} onChange={(val) => update('security', { ...settings.security, redaction: val })} />
+          <ToggleRow label={t.ocrSettings.piiDetection} checked={settings.security.piiDetection} onChange={(val) => update('security', { ...settings.security, piiDetection: val })} />
         </div>
         <label className="block text-sm">
-          Retention
+          {t.ocrSettings.retention}
           <select
             value={settings.security.retention}
             onChange={(e) =>
@@ -261,17 +264,17 @@ const OcrSettingsPanel = ({ settings, onChange, disabled }: Props) => {
             }
             className="input-modern text-sm"
           >
-            <option value="7d">7 days</option>
-            <option value="30d">30 days</option>
-            <option value="90d">90 days</option>
+            <option value="7d">{t.ocrSettings.days7}</option>
+            <option value="30d">{t.ocrSettings.days30}</option>
+            <option value="90d">{t.ocrSettings.days90}</option>
           </select>
         </label>
       </Section>
 
-      <Section title="Output">
+      <Section title={t.ocrSettings.output}>
         <div className="grid grid-cols-2 gap-2">
-          <ToggleRow label="Merge pages" checked={settings.output.mergePages} onChange={(val) => update('output', { ...settings.output, mergePages: val })} />
-          <ToggleRow label="Include confidence" checked={settings.output.includeConfidence} onChange={(val) => update('output', { ...settings.output, includeConfidence: val })} />
+          <ToggleRow label={t.ocrSettings.mergePages} checked={settings.output.mergePages} onChange={(val) => update('output', { ...settings.output, mergePages: val })} />
+          <ToggleRow label={t.ocrSettings.includeConfidence} checked={settings.output.includeConfidence} onChange={(val) => update('output', { ...settings.output, includeConfidence: val })} />
         </div>
         <div className="flex flex-wrap gap-2 text-xs">
           {(['txt', 'md', 'json', 'pdf'] as const).map((format) => (

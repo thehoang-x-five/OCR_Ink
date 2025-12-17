@@ -6,11 +6,13 @@ import Card from '@/components/common/Card';
 import type { BatchJob } from '@/types';
 import { getJobs } from '@/lib/api';
 import type { AppOutletContext } from '@/App';
+import { useI18n } from '@/lib/i18n';
 
 const Dashboard = () => {
   const { pushToast } = useOutletContext<AppOutletContext>();
   const [jobs, setJobs] = useState<BatchJob[]>([]);
   const navigate = useNavigate();
+  const { t } = useI18n();
 
   useEffect(() => {
     getJobs().then(setJobs);
@@ -52,21 +54,14 @@ const Dashboard = () => {
     return base;
   }, [jobs]);
 
-  const healthItems = [
-    { label: 'Queue', value: 'Normal', tone: 'text-emerald-500' },
-    { label: 'API mock', value: 'Connected', tone: 'text-sky-500' },
-    { label: 'Avg processing', value: '~3.2s', tone: 'text-foreground' },
-    { label: 'Retention', value: '30 days', tone: 'text-foreground' },
-  ];
-
   return (
     <div className="space-y-5">
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4 items-stretch">
         {[
-          { title: 'Total jobs', value: stats.total, color: '#38bdf8' },
-          { title: 'Success rate', value: `${stats.successRate}%`, color: '#10b981' },
-          { title: 'Avg confidence', value: `${stats.avgConfidence}%`, color: '#6366f1' },
-          { title: 'Recent files', value: recent.length, color: '#f97316' },
+          { title: t.dashboard.totalJobs, value: stats.total, color: '#38bdf8' },
+          { title: t.dashboard.successRate, value: `${stats.successRate}%`, color: '#10b981' },
+          { title: t.dashboard.avgConfidence, value: `${stats.avgConfidence}%`, color: '#6366f1' },
+          { title: t.dashboard.recentFiles, value: recent.length, color: '#f97316' },
         ].map((item) => (
           <Card key={item.title} title={item.title} description="">
             <div className="flex items-start justify-between">
@@ -86,22 +81,22 @@ const Dashboard = () => {
       </div>
 
       <div className="grid gap-2 sm:grid-cols-3">
-        <Card title="Queued" description="" className="p-3">
+        <Card title={t.dashboard.queued} description="" className="p-3">
           <p className="text-xl font-bold text-amber-500">{statusCounts.queued}</p>
-          <p className="text-xs text-muted-foreground">Waiting</p>
+          <p className="text-xs text-muted-foreground">{t.dashboard.waiting}</p>
         </Card>
-        <Card title="Running" description="" className="p-3">
+        <Card title={t.dashboard.running} description="" className="p-3">
           <p className="text-xl font-bold text-sky-500">{statusCounts.running}</p>
-          <p className="text-xs text-muted-foreground">In progress</p>
+          <p className="text-xs text-muted-foreground">{t.dashboard.inProgress}</p>
         </Card>
-        <Card title="Errors" description="" className="p-3">
+        <Card title={t.dashboard.errors} description="" className="p-3">
           <p className="text-xl font-bold text-rose-500">{statusCounts.error}</p>
-          <p className="text-xs text-muted-foreground">Needs retry</p>
+          <p className="text-xs text-muted-foreground">{t.dashboard.needsRetry}</p>
         </Card>
       </div>
 
       <div className="grid gap-3 xl:grid-cols-2 items-stretch">
-        <Card title="Recent activity" description="Latest jobs timeline" className="h-full">
+        <Card title={t.dashboard.recentActivity} description={t.dashboard.latestJobsTimeline} className="h-full">
           <div className="space-y-3">
             {recent.map((job, idx) => (
               <motion.div
@@ -120,15 +115,15 @@ const Dashboard = () => {
                 <span className="text-xs text-muted-foreground">{job.status}</span>
               </motion.div>
             ))}
-            {!recent.length && <p className="text-sm text-muted-foreground">No activity yet.</p>}
+            {!recent.length && <p className="text-sm text-muted-foreground">{t.dashboard.noActivityYet}</p>}
           </div>
         </Card>
 
-        <Card title="File types usage" description="Top file extensions processed" className="h-full">
+        <Card title={t.dashboard.fileTypesUsage} description={t.dashboard.topFileExtensions} className="h-full">
           <div className="h-full space-y-3">
             <div className="flex items-center justify-between text-xs text-muted-foreground">
-              <span>Total: {stats.total}</span>
-              <span>Done: {stats.done}</span>
+              <span>{t.dashboard.total}: {stats.total}</span>
+              <span>{t.dashboard.done}: {stats.done}</span>
             </div>
             <div className="h-40 rounded-lg border border-border/60 bg-muted/40 p-2">
               <ResponsiveContainer width="100%" height="100%">
@@ -142,10 +137,10 @@ const Dashboard = () => {
               {fileUsage.map((f) => (
                 <div key={f.ext} className="flex items-center justify-between rounded-lg border border-border/50 bg-card/70 px-3 py-2">
                   <span className="font-semibold text-foreground uppercase">{f.ext}</span>
-                  <span className="text-muted-foreground">{f.count} jobs</span>
+                  <span className="text-muted-foreground">{f.count} {t.dashboard.jobs}</span>
                 </div>
               ))}
-              {!fileUsage.length && <p className="text-xs text-muted-foreground">No jobs yet.</p>}
+              {!fileUsage.length && <p className="text-xs text-muted-foreground">{t.dashboard.noJobsYet}</p>}
             </div>
           </div>
         </Card>

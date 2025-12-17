@@ -8,6 +8,7 @@ import ProgressSteps from '@/components/ocr/ProgressSteps';
 import TextResultEditor from '@/components/ocr/TextResultEditor';
 import LayoutViewer from '@/components/ocr/LayoutViewer';
 import { uploadAndExtractText } from '@/lib/api';
+import { useI18n } from '@/lib/i18n';
 import type { AppOutletContext } from '@/App';
 import type { OcrResult, OcrSettings, ProcessStatus, ProgressState } from '@/types';
 import { downloadBlob, findMatches } from '@/utils/file';
@@ -71,8 +72,6 @@ const defaultSettings: OcrSettings = {
     mergePages: true,
     includeConfidence: true,
   },
-  
-  // Backend-specific settings
   parser: 'docling',
   parseMethod: 'auto',
   preserveLayout: true,
@@ -86,6 +85,7 @@ const defaultSettings: OcrSettings = {
 
 const Extract = () => {
   const { searchQuery, pushToast } = useOutletContext<AppOutletContext>();
+  const { t } = useI18n();
   const [files, setFiles] = useState<File[]>([]);
   const [settings, setSettings] = useState<OcrSettings>(defaultSettings);
   const [progress, setProgress] = useState<ProgressState | null>(null);
@@ -99,7 +99,7 @@ const Extract = () => {
 
   const runOcr = async () => {
     if (!uploadedFile) {
-      pushToast({ type: 'error', message: 'Upload a file first' });
+      pushToast({ type: 'error', message: t.extract.uploadFirst });
       return;
     }
     setStatus('running');
@@ -110,11 +110,11 @@ const Extract = () => {
       setEditorText(data.fullText);
       setStatus('done');
       setHistory((prev) => [data, ...prev].slice(0, 5));
-      pushToast({ type: 'success', title: 'OCR done', message: 'Text extracted successfully' });
+      pushToast({ type: 'success', title: t.extract.ocrDone, message: t.extract.textExtracted });
     } catch (err) {
       console.error(err);
       setStatus('error');
-      pushToast({ type: 'error', message: 'OCR failed (mock)' });
+      pushToast({ type: 'error', message: t.extract.ocrFailed });
     }
   };
 
@@ -122,12 +122,12 @@ const Extract = () => {
     if (!editorText) return;
     const blob = new Blob([editorText], { type: 'text/plain' });
     downloadBlob(blob, `${uploadedFile?.name || 'ocr-result'}.txt`);
-    pushToast({ type: 'info', message: 'Downloaded text file' });
+    pushToast({ type: 'info', message: t.extract.downloadedText });
   };
 
   const handleCopy = () => {
     navigator.clipboard.writeText(editorText);
-    pushToast({ type: 'success', message: 'Copied to clipboard' });
+    pushToast({ type: 'success', message: t.extract.copiedClipboard });
   };
 
   const handleClear = () => {
@@ -139,27 +139,27 @@ const Extract = () => {
 
   return (
     <div className="space-y-6">
-         <div className="grid gap-4 xl:grid-cols-[1.2fr_1.8fr] items-start">
+      <div className="grid gap-4 xl:grid-cols-[1.2fr_1.8fr] items-start">
         <div className="space-y-4 min-w-0">
-          <Card title="Upload" description="Drag & drop or browse files">
+          <Card title={t.extract.uploadTitle} description={t.extract.uploadDesc}>
             <Dropzone files={files} onFiles={setFiles} onError={(m) => pushToast({ type: 'error', message: m })} />
           </Card>
-          <Card title="Preview">
+          <Card title={t.extract.preview}>
             <FilePreview file={uploadedFile} result={result} />
           </Card>
-          <Card title="Preprocess & Output">
+          <Card title={t.extract.preprocessOutput}>
             <OcrSettingsPanel settings={settings} onChange={setSettings} disabled={status === 'running'} />
           </Card>
         </div>
 
         <div className="space-y-4 min-w-0">
-          <Card title="Progress" description="Upload → preprocess → recognize → post-process">
+          <Card title={t.extract.progress} description={t.extract.progressDesc}>
             <ProgressSteps progress={progress} status={status} />
             <div className="mt-3 rounded-lg border border-border/70 bg-muted/40 p-3 text-xs text-muted-foreground">
-              Queue: upload → preprocess → recognize → postprocess → done. Retry or cancel supported (mock).
+              {t.extract.queueInfo}
             </div>
           </Card>
-          <Card title="Layout & Result" description="Edit text and view layout in sync">
+          <Card title={t.extract.layoutResult} description={t.extract.layoutResultDesc}>
             <div className="space-y-4">
               <LayoutViewer layoutPages={result?.layoutPages} fullText={editorText || result?.fullText || ''} text={editorText} />
               <TextResultEditor
@@ -181,10 +181,9 @@ const Extract = () => {
             disabled={!uploadedFile || status === 'running'}
             className="btn-gradient flex items-center justify-center gap-2 w-full"
           >
-            {status === 'running' ? 'Processing...' : 'Run OCR'}
+            {status === 'running' ? t.common.processing : t.extract.runOcr}
           </button>
         </div>
-
       </div>
     </div>
   );

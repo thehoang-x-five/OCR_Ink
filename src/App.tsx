@@ -13,6 +13,7 @@ import Settings from '@/routes/Settings';
 import Help from '@/routes/Help';
 import NotFound from '@/pages/NotFound';
 import { useToastQueue } from '@/hooks/useToastQueue';
+import { I18nProvider } from '@/lib/i18n';
 import type { ToastMessage } from '@/types';
 
 export type AppOutletContext = {
@@ -66,21 +67,23 @@ const AppLayout = () => {
 };
 
 const App = () => (
-  <BrowserRouter>
-    <Routes>
-      <Route element={<AppLayout />}>
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/extract" element={<Extract />} />
-        <Route path="/convert" element={<Convert />} />
-        <Route path="/batch" element={<BatchJobs />} />
-        <Route path="/history" element={<History />} />
-        <Route path="/settings" element={<Settings />} />
-        <Route path="/help" element={<Help />} />
-      </Route>
-      <Route path="*" element={<NotFound />} />
-    </Routes>
-  </BrowserRouter>
+  <I18nProvider>
+    <BrowserRouter>
+      <Routes>
+        <Route element={<AppLayout />}>
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/extract" element={<Extract />} />
+          <Route path="/convert" element={<Convert />} />
+          <Route path="/batch" element={<BatchJobs />} />
+          <Route path="/history" element={<History />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="/help" element={<Help />} />
+        </Route>
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </BrowserRouter>
+  </I18nProvider>
 );
 
 export default App;

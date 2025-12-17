@@ -4,6 +4,7 @@ import Card from '@/components/common/Card';
 import Dropzone from '@/components/ocr/Dropzone';
 import JobsTable from '@/components/batch/JobsTable';
 import { createBatchJobs, createBatchJobsWithBackend, getJobs } from '@/lib/api';
+import { useI18n } from '@/lib/i18n';
 import type { AppOutletContext } from '@/App';
 import type { BatchJob, OcrSettings } from '@/types';
 
@@ -44,8 +45,6 @@ const batchDefaults: OcrSettings = {
   intelligence: { tableExtraction: true, keyValueExtraction: true, entityExtraction: true, template: 'invoice' },
   security: { retention: '30d', piiDetection: false, redaction: false },
   output: { exportFormats: ['txt', 'md', 'json'], mergePages: true, includeConfidence: true },
-  
-  // Backend-specific settings
   parser: 'docling',
   parseMethod: 'auto',
   preserveLayout: true,
@@ -59,6 +58,7 @@ const batchDefaults: OcrSettings = {
 
 const BatchJobs = () => {
   const { pushToast } = useOutletContext<AppOutletContext>();
+  const { t } = useI18n();
   const [files, setFiles] = useState<File[]>([]);
   const [jobs, setJobs] = useState<BatchJob[]>([]);
   const [isCreating, setIsCreating] = useState(false);
@@ -80,74 +80,72 @@ const BatchJobs = () => {
 
   const createJobs = async () => {
     if (!files.length) {
-      pushToast({ type: 'error', message: 'Select files first' });
+      pushToast({ type: 'error', message: t.batch.selectFirst });
       return;
     }
     setIsCreating(true);
     
     try {
-      // Try backend first
       const created = await createBatchJobsWithBackend(files, batchDefaults);
       setJobs((prev) => [...created, ...prev]);
       setFiles([]);
-      pushToast({ type: 'success', message: `${created.length} jobs queued with backend` });
+      pushToast({ type: 'success', message: `${created.length} ${t.batch.jobsQueuedBackend}` });
     } catch (error) {
       console.warn('Backend batch processing failed, falling back to demo:', error);
-      // Fallback to demo mode
       const created = await createBatchJobs(files, batchDefaults);
       setJobs((prev) => [...created, ...prev]);
       setFiles([]);
-      pushToast({ type: 'info', message: `${created.length} jobs queued (demo mode)` });
+      pushToast({ type: 'info', message: `${created.length} ${t.batch.jobsQueuedDemo}` });
     }
     
     setIsCreating(false);
   };
 
   const handleRetry = (job: BatchJob) => {
-    pushToast({ type: 'info', message: `Retrying ${job.fileName}` });
+    pushToast({ type: 'info', message: `${t.batch.retrying} ${job.fileName}` });
   };
 
   const handleDownload = (job: BatchJob) => {
-    pushToast({ type: 'success', message: `Downloading ${job.fileName}` });
+    pushToast({ type: 'success', message: `${t.batch.downloading} ${job.fileName}` });
   };
 
   const handleCancel = (job: BatchJob) => {
-    pushToast({ type: 'error', message: `Canceled ${job.fileName}` });
+    pushToast({ type: 'error', message: `${t.batch.canceled} ${job.fileName}` });
   };
 
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center gap-3">
         <div className="rounded-2xl border border-border/70 bg-card/90 px-4 py-2 text-sm shadow-sm">
-          <span className="text-muted-foreground">Files:</span>{' '}
+          <span className="text-muted-foreground">{t.common.files}:</span>{' '}
           <span className="font-semibold text-foreground">{files.length || 0}</span>
         </div>
         <div className="rounded-2xl border border-border/70 bg-card/90 px-4 py-2 text-sm shadow-sm">
-          <span className="text-muted-foreground">Total size:</span>{' '}
+          <span className="text-muted-foreground">{t.common.totalSize}:</span>{' '}
           <span className="font-semibold text-foreground">
             {totalSizeMb ? `${totalSizeMb.toFixed(2)} MB` : '0 MB'}
           </span>
         </div>
         <div className="rounded-2xl border border-border/70 bg-card/90 px-4 py-2 text-sm shadow-sm">
-          <span className="text-muted-foreground">Types:</span>{' '}
+          <span className="text-muted-foreground">{t.common.types}:</span>{' '}
           <span className="font-semibold text-foreground">
             {topTypes || '—'}
           </span>
         </div>
         <div className="rounded-2xl border border-border/70 bg-card/90 px-4 py-2 text-sm shadow-sm">
-          <span className="text-muted-foreground">Queued jobs:</span>{' '}
+          <span className="text-muted-foreground">{t.common.queuedJobs}:</span>{' '}
           <span className="font-semibold text-foreground">{jobs.length}</span>
         </div>
         <button className="btn-gradient ml-auto" onClick={createJobs} disabled={!files.length || isCreating}>
-          {isCreating ? 'Queuing...' : 'Create jobs'}
+          {isCreating ? t.batch.queuing : t.batch.createJobs}
         </button>
       </div>
 
-      <Card title="Batch upload" description="Upload many files at once">
+      <Card title={t.batch.batchUpload} description={t.batch.batchUploadDesc}>
         <Dropzone files={files} onFiles={setFiles} multiple onError={(m) => pushToast({ type: 'error', message: m })} />
       </Card>
 
-      <Card title="Job queue" description="History by day with actions">
+      <Card title={t.batch.jobQueue} description={t.batch.jobQueueDesc}>
         <JobsTable jobs={jobs} onRetry={handleRetry} onDownload={handleDownload} onCancel={handleCancel} />
       </Card>
     </div>

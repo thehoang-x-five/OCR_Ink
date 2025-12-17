@@ -1,7 +1,8 @@
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { twMerge } from 'tailwind-merge';
+import { useI18n } from '@/lib/i18n';
 
 interface SidebarProps {
   collapsed: boolean;
@@ -10,100 +11,76 @@ interface SidebarProps {
 
 type NavKey = 'dashboard' | 'extract' | 'convert' | 'batch' | 'history' | 'settings' | 'help';
 
-const navLinks: { to: string; label: string; key: NavKey; icon: () => JSX.Element }[] = [
-  {
-    to: '/dashboard',
-    label: 'Tổng quan',
-    key: 'dashboard',
-    icon: () => (
-      <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none">
-        <path d="M4 11h16M4 17h10M10 5h10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    ),
-  },
-  {
-    to: '/extract',
-    label: 'Extract OCR',
-    key: 'extract',
-    icon: () => (
-      <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none">
-        <rect x="4" y="4" width="16" height="16" rx="3" stroke="currentColor" strokeWidth="1.8" />
-        <path d="M9 12h6M12 9v6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-      </svg>
-    ),
-  },
-  {
-    to: '/convert',
-    label: 'Convert Text',
-    key: 'convert',
-    icon: () => (
-      <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none">
-        <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-        <path d="M16 6 12 2 8 6m4-4v13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    ),
-  },
-  {
-    to: '/batch',
-    label: 'Batch Jobs',
-    key: 'batch',
-    icon: () => (
-      <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none">
-        <path d="M4 11h6V4H4v7Zm10 9h6v-7h-6v7Zm0-9h6V4h-6v7Zm-10 9h6v-7H4v7Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
-      </svg>
-    ),
-  },
-  {
-    to: '/history',
-    label: 'History',
-    key: 'history',
-    icon: () => (
-      <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none">
-        <path d="M4.5 12a7.5 7.5 0 1 1 3 5.94" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-        <path d="M4 4v4h4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M12 8v4l3 2" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    ),
-  },
-  {
-    to: '/settings',
-    label: 'Cấu hình',
-    key: 'settings',
-    icon: () => (
-      <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none">
-        <path
-          d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33H15a1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15 1.65 1.65 0 0 0 3 14H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9 1.65 1.65 0 0 0 4.27 7.18l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6V4.5A1.65 1.65 0 0 0 10 3V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9H19.5A1.65 1.65 0 0 0 21 10.65V11a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"
-          stroke="currentColor"
-          strokeWidth="1.6"
-        />
-        <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.6" />
-      </svg>
-    ),
-  },
-  {
-    to: '/help',
-    label: 'Hỗ trợ',
-    key: 'help',
-    icon: () => (
-      <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none">
-        <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.8" />
-        <path d="M9.5 9.5a2.5 2.5 0 1 1 3.8 2.1c-.7.4-1.3 1-1.3 1.9v.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-        <circle cx="12" cy="16.5" r=".85" fill="currentColor" />
-      </svg>
-    ),
-  },
-];
-
-const quickActions = [
-  { to: '/extract', label: 'New OCR Job' },
-  { to: '/convert', label: 'New Convert Job' },
-];
+const navIcons: Record<NavKey, () => JSX.Element> = {
+  dashboard: () => (
+    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none">
+      <path d="M4 11h16M4 17h10M10 5h10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  ),
+  extract: () => (
+    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none">
+      <rect x="4" y="4" width="16" height="16" rx="3" stroke="currentColor" strokeWidth="1.8" />
+      <path d="M9 12h6M12 9v6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  ),
+  convert: () => (
+    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none">
+      <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <path d="M16 6 12 2 8 6m4-4v13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  ),
+  batch: () => (
+    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none">
+      <path d="M4 11h6V4H4v7Zm10 9h6v-7h-6v7Zm0-9h6V4h-6v7Zm-10 9h6v-7H4v7Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+    </svg>
+  ),
+  history: () => (
+    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none">
+      <path d="M4.5 12a7.5 7.5 0 1 1 3 5.94" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <path d="M4 4v4h4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M12 8v4l3 2" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  ),
+  settings: () => (
+    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none">
+      <path
+        d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33H15a1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15 1.65 1.65 0 0 0 3 14H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9 1.65 1.65 0 0 0 4.27 7.18l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6V4.5A1.65 1.65 0 0 0 10 3V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9H19.5A1.65 1.65 0 0 0 21 10.65V11a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"
+        stroke="currentColor"
+        strokeWidth="1.6"
+      />
+      <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.6" />
+    </svg>
+  ),
+  help: () => (
+    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none">
+      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.8" />
+      <path d="M9.5 9.5a2.5 2.5 0 1 1 3.8 2.1c-.7.4-1.3 1-1.3 1.9v.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="12" cy="16.5" r=".85" fill="currentColor" />
+    </svg>
+  ),
+};
 
 const Sidebar = ({ collapsed, onToggle }: SidebarProps) => {
   const { pathname } = useLocation();
   const [hovered, setHovered] = useState<string | null>(null);
+  const { t } = useI18n();
 
-  const activeKey = useMemo(() => navLinks.find((l) => pathname.startsWith(l.to))?.to ?? null, [pathname]);
+  const navLinks: { to: string; label: string; key: NavKey }[] = [
+    { to: '/dashboard', label: t.nav.dashboard, key: 'dashboard' },
+    { to: '/extract', label: t.nav.extract, key: 'extract' },
+    { to: '/convert', label: t.nav.convert, key: 'convert' },
+    { to: '/batch', label: t.nav.batch, key: 'batch' },
+    { to: '/history', label: t.nav.history, key: 'history' },
+    { to: '/settings', label: t.nav.settings, key: 'settings' },
+    { to: '/help', label: t.nav.help, key: 'help' },
+  ];
+
+  const quickActions = [
+    { to: '/extract', label: t.nav.newOcrJob },
+    { to: '/convert', label: t.nav.newConvertJob },
+  ];
+
+  const activeKey = useMemo(() => navLinks.find((l) => pathname.startsWith(l.to))?.to ?? null, [pathname, navLinks]);
 
   return (
     <motion.aside
@@ -111,7 +88,7 @@ const Sidebar = ({ collapsed, onToggle }: SidebarProps) => {
       style={{ minWidth: collapsed ? 84 : 270, maxWidth: collapsed ? 84 : 270 }}
       transition={{ duration: 0.18 }}
       className="sticky top-0 left-0 z-30 flex h-screen flex-col border-r border-border/70 bg-background/80 backdrop-blur-xl shadow-xl shadow-primary/5"
-      aria-label="Sidebar điều hướng"
+      aria-label="Sidebar"
     >
       <div className="flex items-center justify-between px-3 pt-3 pb-2">
         {!collapsed && (
@@ -136,8 +113,8 @@ const Sidebar = ({ collapsed, onToggle }: SidebarProps) => {
         )}
 
         <button
-          aria-label={collapsed ? 'Mở menu' : 'Thu gọn menu'}
-          title={collapsed ? 'Mở menu' : 'Thu gọn menu'}
+          aria-label={collapsed ? t.nav.openMenu : t.nav.collapseMenu}
+          title={collapsed ? t.nav.openMenu : t.nav.collapseMenu}
           className="flex h-9 w-9 items-center justify-center rounded-xl border border-border text-muted-foreground transition hover:bg-muted/80 hover:text-foreground"
           onClick={onToggle}
         >
@@ -149,19 +126,20 @@ const Sidebar = ({ collapsed, onToggle }: SidebarProps) => {
 
       {!collapsed && (
         <div className="flex items-center justify-between px-3 pb-1 text-[11px] font-medium text-muted-foreground">
-          <span>Menu</span>
+          <span>{t.nav.menu}</span>
           <span className="inline-flex items-center gap-1 rounded-full border border-primary/15 bg-primary/10 px-2 py-0.5 text-[10px] text-primary">
             <span className="h-1 w-1 rounded-full bg-primary" />
-            Today flow
+            {t.nav.todayFlow}
           </span>
         </div>
       )}
 
       <nav className="scrollbar-none flex-1 overflow-y-auto px-2 pt-1" role="navigation">
         <ul className="flex flex-col gap-2">
-          {navLinks.map(({ to, label, key, icon: Icon }) => {
+          {navLinks.map(({ to, label, key }) => {
             const isActive = activeKey === to;
             const isHover = hovered === to;
+            const Icon = navIcons[key];
             return (
               <li
                 key={to}
@@ -231,7 +209,7 @@ const Sidebar = ({ collapsed, onToggle }: SidebarProps) => {
       {!collapsed && (
         <div className="space-y-3 px-3 pb-4">
           <div className="rounded-2xl border border-border/70 bg-muted/50 px-3 py-2.5 shadow-sm">
-            <p className="text-[11px] text-muted-foreground">Quick actions</p>
+            <p className="text-[11px] text-muted-foreground">{t.nav.quickActions}</p>
             <div className="mt-2 flex flex-col gap-2">
               {quickActions.map((qa) => (
                 <NavLink
@@ -246,7 +224,7 @@ const Sidebar = ({ collapsed, onToggle }: SidebarProps) => {
             </div>
           </div>
           <div className="rounded-2xl border border-border/70 bg-muted/60 p-3 text-xs text-muted-foreground">
-            OCR UI mock — swap <code className="font-mono">lib/api.ts</code> with real backend easily.
+            OCR UI — swap <code className="font-mono">lib/api.ts</code> with real backend easily.
           </div>
         </div>
       )}

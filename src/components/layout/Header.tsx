@@ -1,4 +1,6 @@
 import { useLocation } from 'react-router-dom';
+import { useI18n } from '@/lib/i18n';
+import type { Language } from '@/lib/i18n';
 
 interface HeaderProps {
   searchQuery: string;
@@ -7,7 +9,13 @@ interface HeaderProps {
 }
 
 const Header = ({ searchQuery, onSearchChange, onToggleTheme }: HeaderProps) => {
-  useLocation(); // placeholder for breadcrumbs if needed later
+  useLocation();
+  const { language, setLanguage, t } = useI18n();
+
+  const toggleLanguage = () => {
+    const newLang: Language = language === 'en' ? 'vi' : 'en';
+    setLanguage(newLang);
+  };
 
   return (
     <header className="sticky top-0 z-30 border-b border-border/70 bg-background/80 dark:bg-slate-950/70 backdrop-blur">
@@ -18,12 +26,12 @@ const Header = ({ searchQuery, onSearchChange, onToggleTheme }: HeaderProps) => 
           </div>
           <div className="leading-tight min-w-0">
             <p className="truncate text-sm font-semibold text-foreground">Alex Nguyen</p>
-            <p className="truncate text-[11px] text-muted-foreground">Workspace Admin</p>
+            <p className="truncate text-[11px] text-muted-foreground">{t.header.workspaceAdmin}</p>
           </div>
           <div className="hidden flex-col gap-1 pl-3 sm:flex">
             <div className="flex items-center gap-2">
               <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">DocText Suite</span>
-              <span className="text-[10px] rounded-full bg-primary/10 px-2 py-1 text-primary">OCR & Converter</span>
+              <span className="text-[10px] rounded-full bg-primary/10 px-2 py-1 text-primary">{t.header.ocrConverter}</span>
             </div>
           </div>
         </div>
@@ -37,7 +45,7 @@ const Header = ({ searchQuery, onSearchChange, onToggleTheme }: HeaderProps) => 
             <input
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
-              placeholder="Search in OCR results..."
+              placeholder={t.header.searchPlaceholder}
               className="w-full bg-transparent text-xs sm:text-sm text-foreground placeholder:text-muted-foreground outline-none"
             />
           </div>
@@ -46,7 +54,7 @@ const Header = ({ searchQuery, onSearchChange, onToggleTheme }: HeaderProps) => 
         <div className="flex items-center gap-2 pl-2 text-sm flex-shrink-0">
           <button
             className="relative flex h-10 w-10 items-center justify-center rounded-full border border-border text-lg transition hover:bg-muted"
-            aria-label="Notifications"
+            aria-label={t.header.notifications}
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
               <path
@@ -69,13 +77,17 @@ const Header = ({ searchQuery, onSearchChange, onToggleTheme }: HeaderProps) => 
             <button
               onClick={onToggleTheme}
               className="hidden h-10 w-10 items-center justify-center rounded-full border border-border text-lg transition hover:bg-muted sm:flex"
-              aria-label="Toggle theme"
+              aria-label={t.header.toggleTheme}
             >
               ☼
             </button>
           )}
-          <button className="relative flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
-            <span className="text-sm font-semibold">VN</span>
+          <button 
+            onClick={toggleLanguage}
+            className="relative flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition"
+            title={language === 'en' ? 'Switch to Vietnamese' : 'Chuyển sang Tiếng Anh'}
+          >
+            <span className="text-sm font-semibold">{language === 'en' ? 'EN' : 'VI'}</span>
           </button>
         </div>
       </div>

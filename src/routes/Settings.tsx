@@ -2,11 +2,13 @@ import { useState, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import Card from '@/components/common/Card';
 import { apiClient } from '@/lib/api';
+import { useI18n } from '@/lib/i18n';
 import type { AppOutletContext } from '@/App';
 import type { OcrLanguage, OcrMode } from '@/types';
 
 const Settings = () => {
   const { pushToast } = useOutletContext<AppOutletContext>();
+  const { t, language: uiLanguage, setLanguage: setUiLanguage } = useI18n();
   const [language, setLanguage] = useState<OcrLanguage>('auto');
   const [mode, setMode] = useState<OcrMode>('balanced');
   const [autosave, setAutosave] = useState(true);
@@ -44,7 +46,6 @@ const Settings = () => {
         ollamaReachable: health.ollamaReachable
       });
       
-      // Update settings from backend defaults
       if (health.parserDefault) {
         setParser(health.parserDefault as 'docling' | 'mineru');
       }
@@ -58,17 +59,44 @@ const Settings = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold">Settings</h1>
-        <p className="text-muted-foreground">Defaults, limits, and preferences (mock)</p>
+        <h1 className="text-2xl font-semibold">{t.settings.title}</h1>
+        <p className="text-muted-foreground">{t.settings.subtitle}</p>
       </div>
 
       <div className="grid gap-4 xl:grid-cols-2">
-        <Card title="Backend Status" description="Connection and service status">
+        <Card title={t.settings.uiLanguage} description={t.settings.uiLanguageDesc}>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => setUiLanguage('vi')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition ${
+                uiLanguage === 'vi' 
+                  ? 'border-primary bg-primary/10 text-primary' 
+                  : 'border-border hover:bg-muted'
+              }`}
+            >
+              <span className="text-lg">🇻🇳</span>
+              <span className="font-medium">Tiếng Việt</span>
+            </button>
+            <button
+              onClick={() => setUiLanguage('en')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition ${
+                uiLanguage === 'en' 
+                  ? 'border-primary bg-primary/10 text-primary' 
+                  : 'border-border hover:bg-muted'
+              }`}
+            >
+              <span className="text-lg">🇺🇸</span>
+              <span className="font-medium">English</span>
+            </button>
+          </div>
+        </Card>
+
+        <Card title={t.settings.backendStatus} description={t.settings.connectionStatus}>
           <div className="space-y-3">
             <div className="flex items-center gap-2">
               <div className={`h-2 w-2 rounded-full ${backendStatus.connected ? 'bg-green-500' : 'bg-red-500'}`} />
               <span className="text-sm">
-                {backendStatus.connected ? 'Connected' : 'Disconnected'}
+                {backendStatus.connected ? t.settings.connected : t.settings.disconnected}
               </span>
               {backendStatus.version && (
                 <span className="text-xs text-muted-foreground">v{backendStatus.version}</span>
@@ -78,16 +106,16 @@ const Settings = () => {
             {backendStatus.connected && (
               <div className="grid grid-cols-2 gap-2 text-xs">
                 <div>
-                  <span className="text-muted-foreground">Parser:</span>{' '}
+                  <span className="text-muted-foreground">{t.settings.parser}:</span>{' '}
                   <span className="font-medium">{backendStatus.parserDefault}</span>
                 </div>
                 <div>
-                  <span className="text-muted-foreground">RAG:</span>{' '}
-                  <span className="font-medium">{backendStatus.enableRag ? 'Enabled' : 'Disabled'}</span>
+                  <span className="text-muted-foreground">{t.settings.rag}:</span>{' '}
+                  <span className="font-medium">{backendStatus.enableRag ? t.settings.enabled : t.settings.disabled}</span>
                 </div>
                 <div>
-                  <span className="text-muted-foreground">Ollama:</span>{' '}
-                  <span className="font-medium">{backendStatus.ollamaReachable ? 'Connected' : 'Disconnected'}</span>
+                  <span className="text-muted-foreground">{t.settings.ollama}:</span>{' '}
+                  <span className="font-medium">{backendStatus.ollamaReachable ? t.settings.connected : t.settings.disconnected}</span>
                 </div>
               </div>
             )}
@@ -96,15 +124,15 @@ const Settings = () => {
               onClick={checkBackendHealth}
               className="btn-secondary text-xs"
             >
-              Refresh Status
+              {t.settings.refreshStatus}
             </button>
           </div>
         </Card>
 
-        <Card title="Default OCR settings">
+        <Card title={t.settings.defaultOcrSettings}>
           <div className="grid grid-cols-2 gap-3 text-sm">
             <label className="flex flex-col gap-1">
-              Parser
+              {t.settings.parser}
               <select 
                 value={parser} 
                 onChange={(e) => setParser(e.target.value as 'docling' | 'mineru')} 
@@ -116,42 +144,42 @@ const Settings = () => {
               </select>
             </label>
             <label className="flex flex-col gap-1">
-              Parse Method
+              {t.settings.parseMethod}
               <select 
                 value={parseMethod} 
                 onChange={(e) => setParseMethod(e.target.value as 'auto' | 'ocr' | 'txt')} 
                 className="input-modern text-sm"
                 disabled={!backendStatus.connected}
               >
-                <option value="auto">Auto</option>
+                <option value="auto">{t.ocrSettings.auto}</option>
                 <option value="ocr">OCR</option>
                 <option value="txt">Text</option>
               </select>
             </label>
             <label className="flex flex-col gap-1">
-              Language
+              {t.settings.language}
               <select value={language} onChange={(e) => setLanguage(e.target.value as OcrLanguage)} className="input-modern text-sm">
-                <option value="auto">Auto</option>
-                <option value="vi">Vietnamese</option>
-                <option value="en">English</option>
+                <option value="auto">{t.ocrSettings.auto}</option>
+                <option value="vi">{t.ocrSettings.vietnamese}</option>
+                <option value="en">{t.ocrSettings.english}</option>
               </select>
             </label>
             <label className="flex flex-col gap-1">
-              Mode
+              {t.settings.mode}
               <select value={mode} onChange={(e) => setMode(e.target.value as OcrMode)} className="input-modern text-sm">
-                <option value="fast">Fast</option>
-                <option value="balanced">Balanced</option>
-                <option value="accurate">Accurate</option>
+                <option value="fast">{t.ocrSettings.fast}</option>
+                <option value="balanced">{t.ocrSettings.balanced}</option>
+                <option value="accurate">{t.ocrSettings.accurate}</option>
               </select>
             </label>
             <label className="flex items-center gap-2 col-span-2">
               <input type="checkbox" checked={autosave} onChange={(e) => setAutosave(e.target.checked)} />
-              Autosave results
+              {t.settings.autosaveResults}
             </label>
           </div>
         </Card>
 
-        <Card title="Local Ollama Settings" description="Configure local LLM integration">
+        <Card title={t.settings.localOllamaSettings} description={t.settings.localOllamaDesc}>
           <div className="space-y-3">
             <label className="flex items-center gap-2">
               <input 
@@ -159,13 +187,13 @@ const Settings = () => {
                 checked={useLocalOllama} 
                 onChange={(e) => setUseLocalOllama(e.target.checked)} 
               />
-              Use Local Ollama
+              {t.settings.useLocalOllama}
             </label>
             
             {useLocalOllama && (
               <div className="space-y-3 pl-6 border-l-2 border-border/50">
                 <label className="flex flex-col gap-1">
-                  Base URL
+                  {t.settings.baseUrl}
                   <input 
                     type="text" 
                     value={ollamaBaseUrl} 
@@ -177,7 +205,7 @@ const Settings = () => {
                 
                 <div className="grid grid-cols-1 gap-2">
                   <label className="flex flex-col gap-1">
-                    LLM Model
+                    {t.settings.llmModel}
                     <input 
                       type="text" 
                       value={ollamaLlmModel} 
@@ -188,7 +216,7 @@ const Settings = () => {
                   </label>
                   
                   <label className="flex flex-col gap-1">
-                    Embedding Model
+                    {t.settings.embeddingModel}
                     <input 
                       type="text" 
                       value={ollamaEmbedModel} 
@@ -199,7 +227,7 @@ const Settings = () => {
                   </label>
                   
                   <label className="flex flex-col gap-1">
-                    Vision Model
+                    {t.settings.visionModel}
                     <input 
                       type="text" 
                       value={ollamaVisionModel} 
@@ -211,7 +239,7 @@ const Settings = () => {
                 </div>
                 
                 <div className="text-xs text-muted-foreground">
-                  <p>Make sure Ollama is running and models are pulled:</p>
+                  <p>{t.settings.ollamaInstructions}</p>
                   <code className="block mt-1 p-2 bg-muted rounded text-xs">
                     ollama pull {ollamaLlmModel}<br/>
                     ollama pull {ollamaEmbedModel}<br/>
@@ -223,13 +251,13 @@ const Settings = () => {
           </div>
         </Card>
 
-        <Card title="Limits & compliance" description="System constraints">
+        <Card title={t.settings.limitsCompliance} description={t.settings.limitsDesc}>
           <ul className="list-disc space-y-1 pl-5 text-sm text-muted-foreground">
-            <li>Max file size: 15MB</li>
-            <li>Allowed types: PDF, PNG, JPG, JPEG, WebP, TIF, TIFF, BMP, DOC, DOCX, PPT, PPTX, XLS, XLSX, TXT, MD</li>
-            <li>Retention policy: 30 days (configurable)</li>
-            <li>PII detection and masking available</li>
-            <li>Local processing with Ollama (no external API calls)</li>
+            <li>{t.settings.maxFileSize}</li>
+            <li>{t.settings.allowedTypes}</li>
+            <li>{t.settings.retentionPolicy}</li>
+            <li>{t.settings.piiDetection}</li>
+            <li>{t.settings.localProcessing}</li>
           </ul>
         </Card>
       </div>
