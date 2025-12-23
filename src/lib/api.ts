@@ -15,7 +15,7 @@ class ApiClient {
   async extractOcr(file: File, settings: OcrSettings, sync: boolean = false): Promise<{ jobId?: string; result?: OcrResult }> {
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('settings', JSON.stringify({
+    formData.append('settings_json', JSON.stringify({
       parser: settings.parser || 'docling',
       parse_method: settings.parseMethod || 'auto',
       language: settings.language || 'auto',
@@ -55,10 +55,14 @@ class ApiClient {
 
     const data = await response.json();
     console.log('Backend OCR response:', data);
+    console.log('Sync mode:', sync);
+    console.log('Has result:', !!data.result);
     
     if (sync && data.result) {
       console.log('Using backend result');
-      return { result: this.transformBackendResult(data.result) };
+      const transformed = this.transformBackendResult(data.result);
+      console.log('Transformed result:', transformed);
+      return { result: transformed };
     } else {
       console.log('Got jobId:', data.jobId);
       return { jobId: data.jobId };
@@ -154,6 +158,8 @@ class ApiClient {
   }
 
   private transformBackendResult(backendResult: any): OcrResult {
+    console.log('Transforming backend result:', backendResult);
+    
     // Transform backend result to frontend format
     const pages: OcrPage[] = backendResult.pages?.map((page: any) => ({
       page: page.page,
@@ -169,21 +175,33 @@ class ApiClient {
       blocks: page.blocks?.map((block: any) => ({
         id: `block-${block.type}-${Math.random()}`,
         bbox: block.bbox,
-        lines: [{
-          text: block.text,
-          confidence: block.confidence || 0.9,
-          bbox: block.bbox,
-          words: [{
-            text: block.text,
-            bbox: block.bbox,
-            confidence: block.confidence || 0.9
-          }]
-        }]
+        lines: block.lines?.map((line: any) => ({
+          text: line.text,
+          confidence: line.confidence || 0.9,
+          bbox: line.bbox,
+          words: line.words?.map((word: any) => ({
+            text: word.text,
+            bbox: word.bbox,
+            confidence: word.confidence || 0.9
+          })) || []
+        })) || []
       })) || []
     })) || [];
 
-    return {
-      fullText: backendResult.fullText || '',
+    // Prefer enhancedText over fullText if available
+    const displayText = backendResult.enhancedText || backendResult.fullText || '';
+    
+    console.log('=== BACKEND RESULT DEBUG ===');
+    console.log('Has enhancedText:', !!backendResult.enhancedText);
+    console.log('Has fullText:', !!backendResult.fullText);
+    console.log('Enhanced text length:', backendResult.enhancedText?.length || 0);
+    console.log('Full text length:', backendResult.fullText?.length || 0);
+    console.log('Display text length:', displayText.length);
+    console.log('Display text preview:', displayText.substring(0, 200));
+    console.log('=========================');
+    
+    const result: OcrResult = {
+      fullText: displayText,  // Use enhanced text as primary text
       pages,
       layoutPages,
       language: backendResult.meta?.language || 'auto',
@@ -194,8 +212,12 @@ class ApiClient {
         entities: [] // TODO: Extract from structured data
       },
       version: 'v1',
-      status: 'done'
+      status: 'done' as const
     };
+    
+    console.log('Transformed result fullText length:', result.fullText.length);
+    console.log('Using enhanced text:', !!backendResult.enhancedText);
+    return result;
   }
 }
 
@@ -238,11 +260,7 @@ export async function uploadAndExtractText(
   }
 }
 
-const CONVERT_STEPS: ProgressState[] = [
-  { current: 1, total: 3, label: 'Analyzing text' },
-  { current: 2, total: 3, label: 'Generating document' },
-  { current: 3, total: 3, label: 'Packaging download' },
-];
+
 
 export async function convertTextToFile(
   text: string,
